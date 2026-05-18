@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>碑林对话 - 古今对话</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'STSong', 'SimSun', serif;
+            background: linear-gradient(180deg, #f5f3ef 0%, #e8e4db 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        .ink-bg {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            background-image:
+                radial-gradient(ellipse at 20% 30%, rgba(45, 45, 45, 0.03) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 70%, rgba(45, 45, 45, 0.02) 0%, transparent 40%);
+            z-index: 0;
+        }
+        .main-container { display: block; position: relative; z-index: 1; }
+        .header { padding: 40px 20px 30px; text-align: center; }
+        .header h1 { font-size: 28px; color: #2d2d2d; font-weight: normal; letter-spacing: 8px; margin-bottom: 8px; }
+        .header p { font-size: 14px; color: #8a8a8a; letter-spacing: 4px; }
+        .divider { width: 60px; height: 1px; background: linear-gradient(90deg, transparent, #2d2d2d, transparent); margin: 20px auto; }
+        .character-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; padding: 15px; }
+        .character-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 15px 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(45, 45, 45, 0.08);
+        }
+        .character-card:hover { transform: translateY(-6px) scale(1.02); background: rgba(255, 255, 255, 0.9); box-shadow: 0 16px 32px rgba(45, 45, 45, 0.1); }
+        .character-avatar { width: 70px; height: 70px; margin: 0 auto 12px; border-radius: 50%; overflow: hidden; border: 2px solid rgba(255, 255, 255, 0.8); box-shadow: 0 3px 15px rgba(45, 45, 45, 0.1); }
+        .character-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .character-name { font-size: 17px; color: #2d2d2d; margin-bottom: 4px; letter-spacing: 2px; font-weight: 500; }
+        .character-title { font-size: 11px; color: #8a8a8a; letter-spacing: 1px; }
+
+        .chat-container {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(180deg, #f5f3ef 0%, #e8e4db 100%);
+            z-index: 100;
+            flex-direction: column;
+        }
+
+        .music-control {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .music-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(45, 45, 45, 0.1);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(45, 45, 45, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .music-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(45, 45, 45, 0.15);
+        }
+
+        .music-btn svg {
+            width: 24px;
+            height: 24px;
+            fill: #2d2d2d;
+        }
+
+        .music-btn.playing svg {
+            animation: music-note 1s infinite ease-in-out;
+        }
+
+        .music-btn.playing::after {
+            content: '';
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 2px solid rgba(45, 45, 45, 0.2);
+            animation: music-pulse 2s infinite ease-out;
+        }
+
+        @keyframes music-note {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        @keyframes music-pulse {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+        .back-btn {
+            position: absolute;
+            top: 30px; left: 20px;
+            width: 44px; height: 44px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.8);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            z-index: 102;
+            box-shadow: 0 2px 10px rgba(45, 45, 45, 0.08);
+        }
+        .back-btn svg { width: 20px; height: 20px; fill: #2d2d2d; }
+
+        .ar-stage {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 80px 20px 200px;
+            position: relative;
+        }
+
+        .character-display {
+            width: 100%;
+            max-width: 260px;
+            aspect-ratio: 3/4;
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .character-figure {
+            width: 100%;
+            height: 100%;
+            border-radius: 30px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(45, 45, 45, 0.15);
+            background: linear-gradient(180deg, #faf8f5 0%, #f5f3ef 100%);
+            position: relative;
+        }
+
+        .character-figure img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center top;
+            background: linear-gradient(180deg, #faf8f5 0%, #f5f3ef 100%);
+        }
+
+        .character-figure.speaking {
+            animation: speaking-pulse 1.5s infinite ease-in-out;
+        }
+
+        @keyframes speaking-pulse {
+            0%, 100% { box-shadow: 0 20px 60px rgba(45, 45, 45, 0.15); }
+            50% { box-shadow: 0 20px 80px rgba(45, 45, 45, 0.25); }
+        }
+
+        .speaking-indicator {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: none;
+            gap: 4px;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(45, 45, 45, 0.1);
+        }
+
+        .speaking-indicator.active { display: flex; }
+
+        .wave-bar {
+            width: 4px;
+            height: 16px;
+            background: linear-gradient(180deg, #2d2d2d 0%, #6a6a6a 100%);
+            border-radius: 2px;
+            animation: sound-wave 0.8s infinite ease-in-out;
+        }
+
+        .wave-bar:nth-child(1) { animation-delay: 0s; }
+        .wave-bar:nth-child(2) { animation-delay: 0.1s; height: 24px; }
+        .wave-bar:nth-child(3) { animation-delay: 0.2s; }
+        .wave-bar:nth-child(4) { animation-delay: 0.3s; height: 12px; }
+        .wave-bar:nth-child(5) { animation-delay: 0.4s; }
+
+        @keyframes sound-wave {
+            0%, 100% { transform: scaleY(0.5); opacity: 0.5; }
+            50% { transform: scaleY(1); opacity: 1; }
+        }
+
+        .speech-bubble {
+            position: absolute;
+            top: 50%;
+            left: calc(100% + 20px);
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 20px;
+            padding: 20px 24px;
+            max-width: 320px;
+            min-width: 250px;
+            box-shadow: 0 10px 35px rgba(45, 45, 45, 0.12);
+            opacity: 0;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 10;
+            max-height: none;
+            height: auto;
+            overflow-y: visible;
+            border: 1px solid rgba(45, 45, 45, 0.05);
+        }
+
+        .speech-bubble.visible { opacity: 1; transform: translateY(-50%); }
+
+        .speech-bubble p {
+            color: #2d2d2d;
+            font-size: 16px;
+            line-height: 2;
+            letter-spacing: 0.5px;
+            text-align: left;
+            margin: 0;
+            padding: 0;
+        }
+
+        .speech-bubble::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            right: 100%;
+            transform: translateY(-50%);
+            border: 15px solid transparent;
+            border-right-color: rgba(255, 255, 255, 0.98);
+            filter: drop-shadow(-4px 0 4px rgba(45, 45, 45, 0.08));
+        }
+
+        .character-info {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .character-name-display { font-size: 24px; color: #2d2d2d; letter-spacing: 4px; margin-bottom: 5px; }
+        .character-title-display { font-size: 14px; color: #8a8a8a; letter-spacing: 2px; }
+        
+        .stop-btn {
+            margin: 15px auto 0;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 2px solid rgba(45, 45, 45, 0.2);
+            background: linear-gradient(145deg, #f5f3ef, #e8e6e1);
+            color: #4a4a4a;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(45, 45, 45, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .stop-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(45, 45, 45, 0.15);
+            background: linear-gradient(145deg, #ebe9e4, #dfddd8);
+        }
+        
+        .stop-btn svg {
+            width: 18px;
+            height: 18px;
+            fill: #4a4a4a;
+        }
+
+        .interaction-area {
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(45, 45, 45, 0.05);
+        }
+
+        .interaction-title {
+            text-align: center;
+            font-size: 14px;
+            color: #8a8a8a;
+            margin-bottom: 15px;
+            letter-spacing: 2px;
+        }
+
+        .interaction-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .interaction-btn {
+            padding: 16px 12px;
+            background: rgba(245, 243, 239, 0.8);
+            border: 1px solid rgba(45, 45, 45, 0.05);
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .interaction-btn:hover {
+            background: rgba(45, 45, 45, 0.08);
+            transform: translateY(-2px);
+        }
+
+        .interaction-btn p { font-size: 14px; color: #2d2d2d; margin-bottom: 4px; letter-spacing: 1px; }
+        .interaction-btn span { font-size: 11px; color: #8a8a8a; }
+
+        .voice-btn {
+            position: fixed;
+            bottom: 220px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #2d2d2d 0%, #4a4a4a 100%);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(45, 45, 45, 0.25);
+            z-index: 103;
+            border: none;
+        }
+
+        .voice-btn.recording { background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); }
+        .voice-btn svg { width: 26px; height: 26px; fill: white; }
+
+        .recording-label {
+            position: fixed;
+            bottom: 300px;
+            right: 15px;
+            background: rgba(231, 76, 60, 0.9);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            display: none;
+            z-index: 104;
+        }
+
+        .recording-label.active { display: block; animation: pulse-label 1.5s infinite; }
+
+        @keyframes pulse-label { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+
+        .input-area {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            padding: 16px 20px;
+            padding-bottom: calc(16px + env(safe-area-inset-bottom));
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(45, 45, 45, 0.05);
+            z-index: 101;
+        }
+
+        .input-wrapper { display: flex; align-items: center; gap: 10px; }
+        .input-field {
+            flex: 1;
+            padding: 15px 22px;
+            border-radius: 30px;
+            border: 1px solid rgba(45, 45, 45, 0.1);
+            background: rgba(245, 243, 239, 0.8);
+            font-family: inherit;
+            font-size: 15px;
+            color: #2d2d2d;
+            outline: none;
+        }
+
+        .input-field:focus { border-color: rgba(45, 45, 45, 0.2); background: white; }
+        .send-btn {
+            width: 48px; height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #2d2d2d 0%, #4a4a4a 100%);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 12px rgba(45, 45, 45, 0.2);
+        }
+
+        .send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .send-btn svg { width: 22px; height: 22px; fill: white; }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(245, 243, 239, 0.95);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            z-index: 200;
+        }
+
+        .loading-overlay.active { display: flex; }
+        .loading-text { font-size: 16px; color: #2d2d2d; letter-spacing: 2px; margin-top: 20px; }
+        .loading-spinner {
+            width: 50px; height: 50px;
+            border: 3px solid rgba(45, 45, 45, 0.1);
+            border-top-color: #2d2d2d;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <audio id="bgMusic" loop>
+        <source src="古风 对话.mp3" type="audio/mpeg">
+    </audio>
+    <div class="music-control">
+        <button id="musicBtn" class="music-btn">
+            <svg viewBox="0 0 24 24" id="musicIcon">
+                <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+            </svg>
+        </button>
+    </div>
+    <div class="ink-bg"></div>
+
+    <div class="main-container" id="mainContainer">
+        <div class="header">
+            <h1>碑林对话</h1>
+            <p>古今对话 · 墨韵千年</p>
+            <div class="divider"></div>
+        </div>
+
+        <div class="character-grid">
+            <div class="character-card" data-character="yan">
+                <div class="character-avatar">
+                    <img src="颜真卿.jpg" alt="颜真卿">
+                </div>
+                <div class="character-name">颜真卿</div>
+                <div class="character-title">唐代 · 楷书大家</div>
+            </div>
+
+            <div class="character-card" data-character="liu">
+                <div class="character-avatar">
+                    <img src="柳公权.jpg" alt="柳公权">
+                </div>
+                <div class="character-name">柳公权</div>
+                <div class="character-title">唐代 · 楷书名家</div>
+            </div>
+
+            <div class="character-card" data-character="ouyang">
+                <div class="character-avatar">
+                    <img src="欧阳询.jpg" alt="欧阳询">
+                </div>
+                <div class="character-name">欧阳询</div>
+                <div class="character-title">唐代 · 书法宗师</div>
+            </div>
+
+            <div class="character-card" data-character="huaisu">
+                <div class="character-avatar">
+                    <img src="怀素.jpg" alt="怀素">
+                </div>
+                <div class="character-name">怀素</div>
+                <div class="character-title">唐代 · 草书圣手</div>
+            </div>
+
+            <div class="character-card" data-character="wang" style="grid-column: span 2;">
+                <div class="character-avatar">
+                    <img src="王羲之.jpg" alt="王羲之">
+                </div>
+                <div class="character-name">王羲之</div>
+                <div class="character-title">东晋 · 书圣</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="chat-container" id="chatContainer">
+        <div class="back-btn" id="backBtn">
+            <svg viewBox="0 0 24 24">
+                <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+            </svg>
+        </div>
+
+        <div class="ar-stage">
+            <div class="character-display">
+                <div class="character-figure" id="characterFigure">
+                    <img src="" alt="" id="characterImage">
+                    <div class="speaking-indicator" id="speakingIndicator">
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                    </div>
+                </div>
+                <div class="speech-bubble" id="speechBubble">
+                    <p id="speechText"></p>
+                </div>
+            </div>
+
+            <div class="character-info">
+                <div class="character-name-display" id="characterNameDisplay">颜真卿</div>
+                <div class="character-title-display" id="characterTitleDisplay">唐代 · 楷书大家</div>
+            </div>
+            
+            <button class="stop-btn" id="stopBtn" style="display: none;">
+                <svg viewBox="0 0 24 24">
+                    <path d="M6 6h12v12H6z"/>
+                </svg>
+            </button>
+            
+            <div class="voice-info" id="voiceInfo" style="display: none; text-align: center; font-size: 12px; color: #8a8a8a; margin-top: 10px;"></div>
+        </div>
+
+        <div class="interaction-area">
+            <div class="interaction-title">选择话题与古人对话</div>
+            <div class="interaction-grid">
+                <div class="interaction-btn" data-topic="greeting">
+                    <p>初次相见</p>
+                    <span>自我介绍一下</span>
+                </div>
+                <div class="interaction-btn" data-topic="stele">
+                    <p>碑石之缘</p>
+                    <span>聊聊刻碑的故事</span>
+                </div>
+                <div class="interaction-btn" data-topic="life">
+                    <p>人生历程</p>
+                    <span>谈谈生平抱负</span>
+                </div>
+                <div class="interaction-btn" data-topic="philosophy">
+                    <p>书法之道</p>
+                    <span>论书法之精妙</span>
+                </div>
+            </div>
+        </div>
+
+        <button class="voice-btn" id="voiceBtn">
+            <svg viewBox="0 0 24 24">
+                <path d="M12 15c1.66 0 2.99-1.34 2.99-3S13.66 9 12 9 9 10.34 9 12s1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 15 6.7 12 9.24 6.9 12 6.9s5.3 2.1 5.3 5.1z"/>
+            </svg>
+        </button>
+        <div class="recording-label" id="recordingLabel">正在聆听...</div>
+    </div>
+
+    <div class="input-area">
+        <div class="input-wrapper">
+            <input type="text" class="input-field" id="inputField" placeholder="输入您想问的问题...">
+            <div class="send-btn" id="sendBtn" disabled>
+                <svg viewBox="0 0 24 24">
+                    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">正在召唤古人...</div>
+    </div>
+
+    <script>
+        const speechSynthesis = window.speechSynthesis;
+        let availableVoices = [];
+        let voicesLoaded = false;
+        
+        speechSynthesis.onvoiceschanged = () => {
+            availableVoices = speechSynthesis.getVoices();
+            voicesLoaded = true;
+            console.log('语音列表已更新:', availableVoices.map(v => v.name));
+        };
+        
+        availableVoices = speechSynthesis.getVoices();
+        if (availableVoices.length > 0) {
+            voicesLoaded = true;
+        }
+        
+        const characters = {
+            yan: {
+                name: '颜真卿',
+                title: '唐代 · 楷书大家',
+                avatar: '颜真卿.jpg',
+                stele: '《多宝塔碑》',
+                steleStory: '此碑乃天宝十一年，我四十四岁时为长安龙兴寺多宝佛塔所书。彼时我任醴泉县尉，与道英禅师相交甚笃。禅师发愿修建佛塔供奉佛牙，邀我撰文并书丹。我昼夜挥毫，笔力雄健，端庄典雅，此碑遂成我早期楷书之代表作。',
+                life: '我生于琅玡临沂，历经玄宗、肃宗、代宗、德宗四朝。安史之乱时，我率义军坚守平原郡，抵御安禄山叛军，尽显忠义。官至刑部尚书、太子太傅，封鲁郡开国公，世称"颜鲁公"。',
+                philosophy: '书法之道，在于心正笔正。吾之书法，倡导筋骨力道，结构端庄大方。点画之间，须有骨力，如壮士拔剑，神采飞扬。后世称我书为"颜体"，以雄健浑厚著称。',
+                greeting: '老夫颜真卿，琅玡临沂人士，唐代书法家也。官至刑部尚书、太子太傅，封鲁郡开国公。以楷书见长，人谓"颜体"。今日得与君相见，幸甚！',
+                keywords: ['颜体', '楷书', '多宝塔', '平原', '忠义', '筋骨'],
+                voice: { rate: 0.85, pitch: 0.5, volume: 1.0 }
+            },
+            liu: {
+                name: '柳公权',
+                title: '唐代 · 楷书名家',
+                avatar: '柳公权.jpg',
+                stele: '《玄秘塔碑》',
+                steleStory: '此碑乃我六十四岁高龄所书，为大达法师端甫而立。端甫法师乃当世高僧，德行高深，宪宗皇帝曾赐号"大达"。裴休撰文，我执笔书丹，笔力遒劲，风骨更显，此碑遂成柳体之典范。',
+                life: '我生于京兆华原，即今陕西铜川。幼承家学，工于书法。穆宗皇帝曾问我笔法之道，我答以"心正则笔正"，帝改容，知其以笔谏也。官至太子少师，世称"柳少师"。',
+                philosophy: '书法之道，贵在骨力。柳体之妙，在于筋骨分明，结构严谨。用笔在心，心正则笔正。一字之工，须尽其势，如锥画沙，如印印泥。',
+                greeting: '在下柳公权，京兆华原人氏，唐代书法家也。官至太子少师，与颜鲁公并称"颜柳"。今与君论书，幸会！',
+                keywords: ['柳体', '玄秘塔', '心正笔正', '骨力', '少师'],
+                voice: { rate: 0.8, pitch: 0.45, volume: 1.0 }
+            },
+            ouyang: {
+                name: '欧阳询',
+                title: '唐代 · 书法宗师',
+                avatar: '欧阳询.jpg',
+                stele: '《九成宫醴泉铭》',
+                steleStory: '此碑乃我七十六岁所书。太宗皇帝在九成宫避暑时，于宫中发现甘泉涌出，以为祥瑞，命魏征撰文记其事。我奉命书丹，昼夜揣摩，力求结构严谨、笔力劲健。此碑被誉为"天下第一楷书"。',
+                life: '我生于长沙，历经陈、隋、唐三代。唐时为太子率更令、弘文馆学士。书法初学王羲之，后参合北碑，自成一派。与虞世南、褚遂良、薛稷并称"初唐四大家"。',
+                philosophy: '书法之妙，在于结构严谨、笔力精到。习书当先立根基，后求变化。笔画之间，须顾盼呼应，方显神采。一字之中，长短、疏密、肥瘦，皆须有度。',
+                greeting: '老夫欧阳询，长沙人士，唐代书法家也。历经三朝，与虞世南、褚遂良、薛稷并称"初唐四大家"。愿与君共论书道。',
+                keywords: ['欧体', '九成宫', '初唐', '结构', '率更令'],
+                voice: { rate: 0.82, pitch: 0.48, volume: 1.0 }
+            },
+            huaisu: {
+                name: '怀素',
+                title: '唐代 · 草书圣手',
+                avatar: '怀素.jpg',
+                stele: '《自叙帖》',
+                steleStory: '此帖乃吾自述学书经历之杰作。吾自幼出家为僧，家贫无纸，乃种芭蕉万株，取叶代纸练习。酒酣之后，笔走龙蛇，如骤雨旋风，神采飞扬。此帖被誉为"天下第一草书"。',
+                life: '吾俗姓钱，字藏真，永州零陵人。自幼出家，以草书名世。嗜酒，兴来挥毫，不计工拙。张旭之后，草书无人出其右，人谓吾"以狂继颠"。',
+                philosophy: '草书之妙，在于无法中有法。心随笔转，物我两忘，方得真意。豪放纵逸之外，仍需根基扎实。笔势连绵，气韵生动。',
+                greeting: '贫僧怀素，俗姓钱，字藏真，永州零陵人。自幼出家，以草书闻名于世。人谓吾"以狂继颠"，愿与君共赏草书之妙！',
+                keywords: ['草书', '自叙帖', '狂草', '芭蕉', '颠'],
+                voice: { rate: 0.9, pitch: 0.52, volume: 1.0 }
+            },
+            wang: {
+                name: '王羲之',
+                title: '东晋 · 书圣',
+                avatar: '王羲之.jpg',
+                stele: '《兰亭集序》',
+                steleStory: '永和九年三月三日，吾与四十二位文人雅士会于会稽山阴之兰亭，修禊事也。天朗气清，惠风和畅，众人饮酒赋诗，吾为作序。微醉挥毫，一气呵成，有若神助。',
+                life: '吾生于会稽山阴，出身琅玡王氏。自幼好书，师从卫夫人，后遍学众家，自成一体。官至右将军、会稽内史，世称"王右军"。',
+                philosophy: '书者，散也。欲书先散怀抱，任情恣性，然后书之。书法之道，不在技巧，而在心意。字如其人，心正则书正。',
+                greeting: '在下王羲之，会稽山阴人氏，东晋书法家也。官至右将军、会稽内史，世称"王右军"。今日得与君论书，三生有幸！',
+                keywords: ['书圣', '兰亭', '右军', '卫夫人', '行书'],
+                voice: { rate: 0.88, pitch: 0.5, volume: 1.0 }
+            }
+        };
+
+        const questionPatterns = {
+            greeting: ['你好', '您好', '嗨', '见到你', '幸会', '久仰', '你是谁', '自我介绍', '认识一下'],
+            stele: ['碑', '石碑', '刻石', '碑石', '碑铭', '碑文', '写碑', '书丹', '多宝塔', '玄秘塔', '九成宫', '自叙帖', '兰亭'],
+            life: ['生平', '人生', '经历', '抱负', '志向', '出身', '家世', '当官', '仕途', '哪里人', '故乡', '籍贯'],
+            philosophy: ['书法', '笔法', '练字', '写字', '书道', '笔力', '结构', '风格', '颜体', '柳体', '欧体', '狂草', '行书'],
+            age: ['多大', '年龄', '几岁', '年纪', '多少岁', '享年'],
+            work: ['作品', '著作', '代表作', '写了什么', '创作', '传世'],
+            advice: ['建议', '指点', '教导', '怎么学', '如何练', '入门', '学习方法'],
+            opinion: ['觉得', '怎么看', '评价', '看法', '认为', '观点'],
+            compare: ['比', '比较', '哪个好', '谁厉害', '排名', '高下'],
+            emotion: ['心情', '感受', '感觉', '如何', '怎样'],
+            history: ['唐朝', '唐代', '东晋', '朝代', '历史', '当时'],
+            learn: ['学习', '练习', '临摹', '入门', '精通', '掌握'],
+            why: ['为什么', '缘由', '原因', '为何']
+        };
+
+        let currentCharacter = null;
+        let isRecording = false;
+        let recognition = null;
+        let currentUtterance = null;
+
+        const characterFigure = document.getElementById('characterFigure');
+        const characterImage = document.getElementById('characterImage');
+        const characterNameDisplay = document.getElementById('characterNameDisplay');
+        const characterTitleDisplay = document.getElementById('characterTitleDisplay');
+        const speechBubble = document.getElementById('speechBubble');
+        const speechText = document.getElementById('speechText');
+        const speakingIndicator = document.getElementById('speakingIndicator');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const inputField = document.getElementById('inputField');
+        const sendBtn = document.getElementById('sendBtn');
+        const voiceBtn = document.getElementById('voiceBtn');
+        const recordingLabel = document.getElementById('recordingLabel');
+        const bgMusic = document.getElementById('bgMusic');
+        const musicBtn = document.getElementById('musicBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        let isMusicPlaying = false;
+
+        bgMusic.volume = 0.3;
+
+        musicBtn.addEventListener('click', () => {
+            if (isMusicPlaying) {
+                bgMusic.pause();
+                musicBtn.classList.remove('playing');
+            } else {
+                bgMusic.play();
+                musicBtn.classList.add('playing');
+            }
+            isMusicPlaying = !isMusicPlaying;
+        });
+        
+        stopBtn.addEventListener('click', () => {
+            if (currentUtterance) {
+                speechSynthesis.cancel();
+                stopBtn.style.display = 'none';
+                speechBubble.classList.remove('visible');
+                speakingIndicator.classList.remove('active');
+                characterFigure.classList.remove('speaking');
+            }
+        });
+
+        const speak = (text) => {
+            if (currentUtterance) speechSynthesis.cancel();
+
+            speechBubble.classList.remove('visible');
+            speakingIndicator.classList.remove('active');
+            characterFigure.classList.remove('speaking');
+
+            setTimeout(() => {
+                speechText.textContent = text;
+                speechBubble.classList.add('visible');
+                speakingIndicator.classList.add('active');
+                characterFigure.classList.add('speaking');
+                stopBtn.style.display = 'flex';
+
+                currentUtterance = new SpeechSynthesisUtterance(text);
+                currentUtterance.lang = 'zh-CN';
+                
+                if (!voicesLoaded) {
+                    availableVoices = speechSynthesis.getVoices();
+                    if (availableVoices.length > 0) {
+                        voicesLoaded = true;
+                    } else {
+                        console.warn('语音列表尚未加载，等待100ms后重试');
+                        setTimeout(() => speak(text), 100);
+                        return;
+                    }
+                }
+                
+                const voices = availableVoices;
+                console.log('可用语音列表:', voices.map(v => v.name));
+                
+                let selectedVoice = voices.find(v => v.name.includes('KangKang'));
+                if (!selectedVoice) selectedVoice = voices.find(v => v.name.includes('Kang'));
+                if (!selectedVoice) selectedVoice = voices.find(v => v.lang.includes('zh') && v.name.includes('Male'));
+                if (!selectedVoice) selectedVoice = voices.find(v => v.lang.includes('zh') && v.name.includes('男'));
+                if (!selectedVoice) selectedVoice = voices.find(v => v.lang.includes('zh-CN'));
+                if (!selectedVoice) selectedVoice = voices.find(v => v.lang.includes('zh'));
+                
+                console.log('选中语音:', selectedVoice ? selectedVoice.name : '未找到');
+                
+                if (!selectedVoice || selectedVoice.name.includes('HuiHui')) {
+                    console.warn('警告：未找到 KangKang 语音，请检查系统语音设置！');
+                    alert('未找到 KangKang 语音，请检查系统语音设置：控制面板 → 轻松使用 → 文字转语音');
+                }
+
+                currentUtterance.pitch = 0.1;
+                
+                const voiceInfo = document.getElementById('voiceInfo');
+                
+                if (selectedVoice) {
+                    currentUtterance.voice = selectedVoice;
+                    console.log('使用语音:', selectedVoice.name, '-', selectedVoice.lang);
+                    voiceInfo.textContent = `语音: ${selectedVoice.name} (${selectedVoice.lang}) | 音调: ${currentUtterance.pitch}`;
+                } else {
+                    console.log('使用默认语音');
+                    voiceInfo.textContent = `语音: 默认 | 音调: ${currentUtterance.pitch}`;
+                }
+                voiceInfo.style.display = 'block';
+
+                if (currentCharacter && currentCharacter.voice) {
+                    currentUtterance.rate = currentCharacter.voice.rate * 0.85;
+                    currentUtterance.volume = currentCharacter.voice.volume;
+                } else {
+                    currentUtterance.rate = 0.7;
+                }
+
+                currentUtterance.onend = () => {
+                    speakingIndicator.classList.remove('active');
+                    characterFigure.classList.remove('speaking');
+                    stopBtn.style.display = 'none';
+                };
+
+                currentUtterance.onerror = () => {
+                    speakingIndicator.classList.remove('active');
+                    characterFigure.classList.remove('speaking');
+                    stopBtn.style.display = 'none';
+                };
+
+                speechSynthesis.speak(currentUtterance);
+            }, 300);
+        };
+
+        const analyzeQuestion = (text) => {
+            const lowerText = text.toLowerCase();
+            const scores = {};
+
+            for (const [topic, patterns] of Object.entries(questionPatterns)) {
+                scores[topic] = 0;
+                for (const pattern of patterns) {
+                    if (lowerText.includes(pattern.toLowerCase())) {
+                        scores[topic] += pattern.length;
+                    }
+                    if (lowerText === pattern.toLowerCase()) {
+                        scores[topic] += 10;
+                    }
+                }
+            }
+
+            let maxScore = 0;
+            let bestTopic = 'default';
+
+            for (const [topic, score] of Object.entries(scores)) {
+                if (score > maxScore) {
+                    maxScore = score;
+                    bestTopic = topic;
+                }
+            }
+
+            if (maxScore === 0) {
+                const smartTopics = extractSmartTopics(text);
+                if (smartTopics.length > 0) {
+                    return smartTopics[0];
+                }
+            }
+
+            return maxScore > 0 ? bestTopic : 'default';
+        };
+
+        const extractSmartTopics = (text) => {
+            const topics = [];
+            const lowerText = text.toLowerCase();
+
+            const topicKeywords = {
+                'greeting': ['你好', '您好', '嗨', 'hi', 'hello', '见到', '幸会', '久仰', '认识', '介绍', '谁', '你是'],
+                'stele': ['碑', '石碑', '刻石', '碑石', '碑铭', '碑文', '书丹', '多宝塔', '玄秘塔', '九成宫', '自叙帖', '兰亭', '书写', '写作'],
+                'life': ['生平', '人生', '经历', '抱负', '志向', '出身', '家世', '当官', '仕途', '官职', '任职', '担任', '生活'],
+                'philosophy': ['书法', '笔法', '练字', '写字', '书道', '笔力', '结构', '风格', '字体', '特点', '特色', '艺术'],
+                'age': ['多大', '年龄', '几岁', '年纪', '多少岁', '享年', '寿命', '生卒'],
+                'work': ['作品', '著作', '代表作', '写了什么', '创作', '传世', '名篇', '佳作'],
+                'advice': ['建议', '指点', '教导', '怎么学', '如何练', '入门', '学习方法', '学习', '练习', '教我'],
+                'opinion': ['觉得', '怎么看', '评价', '看法', '认为', '观点', '见解', '理解'],
+                'compare': ['比', '比较', '哪个好', '谁厉害', '排名', '高下', '区别', '差异', '不同'],
+                'emotion': ['心情', '感受', '感觉', '如何', '怎样', '情绪', '心态'],
+                'history': ['唐朝', '唐代', '东晋', '朝代', '历史', '当时', '年代', '时期', '背景'],
+                'learn': ['学习', '练习', '临摹', '入门', '精通', '掌握', '技法', '技巧'],
+                'why': ['为什么', '缘由', '原因', '为何', '怎么', '怎样'],
+                'where': ['哪里', '何处', '在哪儿', '哪个地方', '位置', '地点'],
+                'name': ['名字', '称谓', '称号', '叫什么', '人称'],
+                'skill': ['擅长', '特长', '优点', '长处', '厉害', '本领', '能力']
+            };
+
+            for (const [topic, keywords] of Object.entries(topicKeywords)) {
+                for (const keyword of keywords) {
+                    if (lowerText.includes(keyword)) {
+                        if (!topics.includes(topic)) {
+                            topics.push(topic);
+                        }
+                    }
+                }
+            }
+
+            return topics;
+        };
+
+        const generateResponse = (text) => {
+            if (!currentCharacter) return '';
+
+            const userText = text.trim();
+            if (!userText) return currentCharacter.greeting;
+
+            const topic = analyzeQuestion(text);
+            const char = currentCharacter;
+            const lowerText = userText.toLowerCase();
+
+            if (lowerText.includes('你') && (lowerText.includes('叫') || lowerText.includes('名字') || lowerText.includes('谁'))) {
+                return char.greeting;
+            }
+
+            if (lowerText.includes('我会') || lowerText.includes('我想学') || lowerText.includes('要学') || lowerText.includes('开始学')) {
+                return `善哉！学书之道，贵在恒心与毅力。${char.philosophy}吾有几言相赠：其一，先习基本笔画，横竖撇捺，点折钩挑；其二，择一古帖专心临摹，不求数量，但求神似；其三，每日练习不辍，日积月累，自有进益。愿君持之以恒，必有所成！`;
+            }
+
+            if (lowerText.includes('你好') || lowerText.includes('您好') || lowerText === 'hi' || lowerText === 'hello') {
+                return char.greeting;
+            }
+
+            switch(topic) {
+                case 'stele':
+                    if (lowerText.includes('为什么') || lowerText.includes('缘由') || lowerText.includes('为何')) {
+                        return `问及${char.stele}之缘由，当日${char.steleStory}此碑承载吾之心血与志向，至今观之，犹感当年挥毫之情境。`;
+                    }
+                    if (lowerText.includes('什么时候') || lowerText.includes('何时') || lowerText.includes('年龄') || lowerText.includes('多大')) {
+                        return `关于${char.stele}，乃吾壮年之作。${char.steleStory}`;
+                    }
+                    if (lowerText.includes('心情') || lowerText.includes('感受')) {
+                        return `书写${char.stele}之时，${char.steleStory}彼时吾心潮澎湃，笔随心动，方成此作。`;
+                    }
+                    return `提及${char.stele}，${char.steleStory}`;
+
+                case 'life':
+                    if (lowerText.includes('哪里') || lowerText.includes('何处') || lowerText.includes('籍贯')) {
+                        if (char.name === '颜真卿') return '老夫乃琅玡临沂人氏，今山东临沂是也。';
+                        if (char.name === '柳公权') return '吾乃京兆华原人，即今陕西铜川。';
+                        if (char.name === '欧阳询') return '老夫长沙人也，祖籍渤海千乘。';
+                        if (char.name === '怀素') return '贫僧永州零陵人，今湖南永州。';
+                        if (char.name === '王羲之') return '吾会稽山阴人，今浙江绍兴。';
+                    }
+                    if (lowerText.includes('当官') || lowerText.includes('仕途') || lowerText.includes('官职')) {
+                        return char.life;
+                    }
+                    return char.life;
+
+                case 'philosophy':
+                    if (lowerText.includes('颜体')) return '颜体之妙，在于雄健浑厚，筋骨分明，端庄大气。点画之间见风骨，结构之中显精神。';
+                    if (lowerText.includes('柳体')) return '柳体以骨力见长，结构严谨，笔画劲挺。筋骨分明，法度森严。';
+                    if (lowerText.includes('欧体')) return '欧体结构严谨，笔力精到，法度森严。初学楷书，此为正途。';
+                    if (lowerText.includes('狂草')) return '狂草之妙，在于无法中有法，心随笔转，物我两忘。酒酣之后，笔走龙蛇。';
+                    if (lowerText.includes('行书')) return '行书兼具楷书之法与草书之韵，行云流水，气韵生动。';
+                    if (lowerText.includes('怎么写') || lowerText.includes('如何写')) {
+                        return `习书之法，当先观其形，后悟其神，再得其意。${char.philosophy}唯有勤学苦练，方能妙笔生花。`;
+                    }
+                    return `论及书法之道，${char.philosophy}`;
+
+                case 'greeting':
+                    return char.greeting;
+
+                case 'age':
+                    if (lowerText.includes('现在') || lowerText.includes('如今')) {
+                        return '吾已作古，然精神长存。您问吾现在如何？吾之书法流传千古，此乃最大欣慰。';
+                    }
+                    if (char.name === '颜真卿') return '老夫享年七十七岁，历经玄宗、肃宗、代宗、德宗四朝，见证大唐由盛转衰。';
+                    if (char.name === '柳公权') return '吾享年八十八岁，历仕穆宗、敬宗、文宗三朝，毕生致力于书法艺术。';
+                    if (char.name === '欧阳询') return '老夫享年八十五岁，历经陈、隋、唐三代，书法生涯逾六十载。';
+                    if (char.name === '怀素') return '贫僧生卒年不详，但知书法生涯贯穿一生，以草书闻名于世。';
+                    if (char.name === '王羲之') return '吾享年五十八岁，虽寿不长，然《兰亭集序》传千古，被后人奉为书圣。';
+                    return char.greeting;
+
+                case 'work':
+                    if (lowerText.includes('最好') || lowerText.includes('最著名') || lowerText.includes('最出名')) {
+                        return `吾之最著名者，当属${char.stele}。${char.steleStory}此作倾注吾毕生所学，实乃心血之作。`;
+                    }
+                    return `吾之代表作有${char.stele}等，皆倾注心血之作。${char.steleStory}`;
+
+                case 'advice':
+                    if (lowerText.includes('入门') || lowerText.includes('初学')) {
+                        return `初学书法，当先摹古帖打基础。建议先从楷书入手，循序渐进。${char.philosophy}习书无捷径，唯有勤学苦练，日积月累，方能有所成就。`;
+                    }
+                    if (lowerText.includes('难') || lowerText.includes('不容易')) {
+                        return `书法之道，虽不易却也有法。${char.philosophy}吾之初学，亦是艰难，然只要心存热爱，坚持不懈，必能渐入佳境。`;
+                    }
+                    if (lowerText.includes('要多久') || lowerText.includes('多长时间')) {
+                        return `习书之路，无捷径可走。${char.philosophy}若能日日练习，持之以恒，三年可入门，十年有小成，终身学习方能大成。`;
+                    }
+                    return `习书之道，当先摹古帖，后求变化。${char.philosophy}吾有几条建议：一曰执笔要正，二曰心要静，三曰练习要勤，四曰要有恒心。`;
+
+                case 'opinion':
+                    if (lowerText.includes('颜真卿')) return '颜鲁公忠义之士，书法雄健，人品书品俱佳，真乃吾辈楷模。';
+                    if (lowerText.includes('柳公权')) return '柳少师笔法精妙，心正则笔正，令人钦佩。';
+                    if (lowerText.includes('欧阳询')) return '欧阳率更书法严谨，堪称初唐典范。';
+                    if (lowerText.includes('怀素')) return '怀素上人草书奔放，以狂继颠，境界非凡。';
+                    if (lowerText.includes('王羲之')) return '王右军书圣之名，当之无愧，《兰亭》一出，千古无双。';
+                    if (lowerText.includes('书法')) return `${char.philosophy}书法乃中华文化之精髓，需用心体悟。`;
+                    return char.philosophy;
+
+                case 'compare':
+                    if ((lowerText.includes('颜') || lowerText.includes('柳')) && (lowerText.includes('谁') || lowerText.includes('哪个'))) {
+                        return '颜筋柳骨，各有千秋。颜体雄健浑厚，柳体劲挺分明，皆为楷书之巅峰，难分高下。';
+                    }
+                    if ((lowerText.includes('欧') || lowerText.includes('颜')) && (lowerText.includes('谁') || lowerText.includes('哪个'))) {
+                        return '欧体严谨精到，颜体雄健浑厚。欧书如君子，颜书如壮士，风格各异，难分伯仲。';
+                    }
+                    if ((lowerText.includes('王') || lowerText.includes('颜')) && (lowerText.includes('谁') || lowerText.includes('哪个'))) {
+                        return '右军乃书圣，开一代风气；鲁公继之，雄健独步。二者皆为书法史上的丰碑，各有所长。';
+                    }
+                    if (lowerText.includes('王') && lowerText.includes('张')) {
+                        return '王右军与张旭，皆书法大家。王右军行书绝伦，张旭狂草无双，各领风骚。';
+                    }
+                    return '书法之道，各有所长，无分高下。颜体雄健，柳体劲挺，欧体严谨，草书奔放，皆为书法艺术之瑰宝。';
+
+                case 'emotion':
+                    return `书写${char.stele}之时，${char.steleStory}彼时吾心潮澎湃，感慨万千。`;
+
+                case 'history':
+                    if (lowerText.includes('安史') || lowerText.includes('叛乱')) {
+                        return '安史之乱，大唐之殇。老夫亲历此乱，率义军坚守平原郡，抵御叛军，忠义之心，天地可鉴。';
+                    }
+                    if (lowerText.includes('当时') || lowerText.includes('那时候')) {
+                        if (char.name === '颜真卿') return '老夫历经安史之乱，率义军坚守平原，忠义可表。';
+                        if (char.name === '柳公权') return '吾所处之世，大唐虽已衰落，然文化艺术仍盛。';
+                        if (char.name === '欧阳询') return '老夫历经三朝更迭，见证隋唐之变。';
+                        if (char.name === '怀素') return '贫僧生于盛唐，得见书法艺术之鼎盛。';
+                        if (char.name === '王羲之') return '东晋之时，玄学兴盛，书法艺术达于巅峰。';
+                    }
+                    return char.life;
+
+                case 'learn':
+                    if (lowerText.includes('要多久') || lowerText.includes('多久')) {
+                        return `习书之道，无捷径可走。${char.philosophy}若能日日练习，持之以恒，三年可入门，十年有小成。`;
+                    }
+                    if (lowerText.includes('很难') || lowerText.includes('不容易')) {
+                        return `万事开头难，书法亦然。${char.philosophy}然只要心存热爱，日日练习，必能渐入佳境。`;
+                    }
+                    return `习书之道，无捷径可走。${char.philosophy}唯有勤学苦练，方能有所成。建议君先选一古帖，日日临摹，必有收获。`;
+
+                case 'why':
+                    if (lowerText.includes('写碑') || lowerText.includes('石碑') || lowerText.includes('碑')) {
+                        return `为何书写${char.stele}？${char.steleStory}`;
+                    }
+                    if (lowerText.includes('成为') || lowerText.includes('书法')) {
+                        return `吾之书法成就，皆源于${char.philosophy}日日练习，从不懈怠，方有今日。`;
+                    }
+                    return char.greeting;
+
+                case 'where':
+                    if (lowerText.includes('写') && (lowerText.includes('哪儿') || lowerText.includes('哪里'))) {
+                        return `书写${char.stele}之时，${char.steleStory}`;
+                    }
+                    return char.life;
+
+                case 'name':
+                    if (lowerText.includes('称') || lowerText.includes('叫')) {
+                        return char.greeting;
+                    }
+                    return char.philosophy;
+
+                case 'skill':
+                    if (lowerText.includes('擅长')) {
+                        if (char.name === '颜真卿') return '老夫擅长楷书与行书，尤以楷书闻名于世，创颜体一派。';
+                        if (char.name === '柳公权') return '吾擅长楷书，与颜真卿并称"颜筋柳骨"，创柳体一派。';
+                        if (char.name === '欧阳询') return '老夫擅长楷书与隶书，创欧体一派，被誉为"楷书之父"。';
+                        if (char.name === '怀素') return '贫僧擅长草书，尤以狂草闻名于世，与张旭并称"颠张狂素"。';
+                        if (char.name === '王羲之') return '吾擅长行书与楷书，被后人奉为书圣，《兰亭集序》被誉为"天下第一行书"。';
+                    }
+                    return char.philosophy;
+
+                default:
+                    const questionWords = ['吗', '呢', '吧', '呀', '啊', '么'];
+                    const isQuestion = questionWords.some(word => lowerText.includes(word));
+
+                    if (isQuestion) {
+                        const responses = [
+                            `君之所问颇有深意。${char.philosophy}愿闻其详。`,
+                            `此事说来话长。${char.steleStory}`,
+                            char.greeting,
+                            `论及此事，${char.philosophy}`,
+                            `善哉此问！${char.steleStory}`
+                        ];
+                        return responses[Math.floor(Math.random() * responses.length)];
+                    } else {
+                        const statements = [
+                            `善哉！${char.philosophy}`,
+                            `所言极是。${char.steleStory}`,
+                            `吾深以为然。${char.philosophy}`,
+                            `君言之有理。${char.steleStory}`
+                        ];
+                        return statements[Math.floor(Math.random() * statements.length)];
+                    }
+            }
+        };
+
+        const initCharacterCards = () => {
+            document.querySelectorAll('.character-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    const characterId = card.dataset.character;
+                    currentCharacter = characters[characterId];
+
+                    loadingOverlay.classList.add('active');
+
+                    setTimeout(() => {
+                        characterImage.src = currentCharacter.avatar;
+                        characterImage.alt = currentCharacter.name;
+                        characterNameDisplay.textContent = currentCharacter.name;
+                        characterTitleDisplay.textContent = currentCharacter.title;
+
+                        document.getElementById('mainContainer').style.display = 'none';
+                        document.getElementById('chatContainer').style.display = 'flex';
+
+                        loadingOverlay.classList.remove('active');
+
+                        setTimeout(() => speak(currentCharacter.greeting), 500);
+                    }, 1000);
+                });
+            });
+        };
+
+        document.getElementById('backBtn').addEventListener('click', () => {
+            if (currentUtterance) speechSynthesis.cancel();
+            document.getElementById('chatContainer').style.display = 'none';
+            document.getElementById('mainContainer').style.display = 'block';
+            currentCharacter = null;
+            inputField.value = '';
+            sendBtn.disabled = true;
+            speechBubble.classList.remove('visible');
+        });
+
+        document.querySelectorAll('.interaction-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (!currentCharacter) return;
+
+                let response = '';
+                switch(btn.dataset.topic) {
+                    case 'greeting': response = currentCharacter.greeting; break;
+                    case 'stele': response = `说起${currentCharacter.stele}，${currentCharacter.steleStory}`; break;
+                    case 'life': response = currentCharacter.life; break;
+                    case 'philosophy': response = `论及书法之道，${currentCharacter.philosophy}`; break;
+                }
+                speak(response);
+            });
+        });
+
+        inputField.addEventListener('input', () => {
+            sendBtn.disabled = !inputField.value.trim();
+        });
+
+        const handleUserInput = (text) => {
+            if (!text.trim() || !currentCharacter) return;
+            const response = generateResponse(text);
+            speak(response);
+        };
+
+        sendBtn.addEventListener('click', () => {
+            handleUserInput(inputField.value.trim());
+            inputField.value = '';
+            sendBtn.disabled = true;
+        });
+
+        inputField.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handleUserInput(inputField.value.trim());
+                inputField.value = '';
+                sendBtn.disabled = true;
+            }
+        });
+
+        const startRecording = () => {
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                alert('您的浏览器不支持语音识别功能，请使用Chrome浏览器');
+                return;
+            }
+
+            recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+            recognition.lang = 'zh-CN';
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+
+            recognition.onstart = () => {
+                isRecording = true;
+                voiceBtn.classList.add('recording');
+                recordingLabel.classList.add('active');
+            };
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                inputField.value = transcript;
+                sendBtn.disabled = false;
+                handleUserInput(transcript);
+            };
+
+            recognition.onerror = () => stopRecording();
+            recognition.onend = () => stopRecording();
+            recognition.start();
+        };
+
+        const stopRecording = () => {
+            isRecording = false;
+            voiceBtn.classList.remove('recording');
+            recordingLabel.classList.remove('active');
+            if (recognition) { recognition.stop(); recognition = null; }
+        };
+
+        voiceBtn.addEventListener('click', () => isRecording ? stopRecording() : startRecording());
+        document.addEventListener('DOMContentLoaded', initCharacterCards);
+    </script>
+</body>
+</html>
