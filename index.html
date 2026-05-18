@@ -85,7 +85,20 @@
             fill: #2d2d2d;
         }
 
-        .music-btn.playing svg {
+        .music-btn.playing .music-icon {
+            display: none;
+        }
+        .music-btn.playing .pause-icon {
+            display: block;
+        }
+        .music-btn:not(.playing) .music-icon {
+            display: block;
+        }
+        .music-btn:not(.playing) .pause-icon {
+            display: none;
+        }
+
+        .music-btn.playing .music-icon {
             animation: music-note 1s infinite ease-in-out;
         }
 
@@ -412,16 +425,94 @@
         }
 
         @keyframes spin { to { transform: rotate(360deg); } }
+
+        @media (max-width: 768px) {
+            .header { padding: 30px 15px 20px; }
+            .header h1 { font-size: 24px; letter-spacing: 5px; }
+            .header p { font-size: 12px; letter-spacing: 3px; }
+            .character-grid { gap: 12px; padding: 12px; }
+            .character-card { padding: 12px 10px; }
+            .character-avatar { width: 60px; height: 60px; }
+            .character-name { font-size: 15px; }
+            .character-title { font-size: 10px; }
+            .music-control { top: 15px; right: 15px; }
+            .music-btn { width: 44px; height: 44px; }
+            .music-btn svg { width: 20px; height: 20px; }
+            .back-btn { top: 20px; left: 15px; width: 40px; height: 40px; }
+            .back-btn svg { width: 18px; height: 18px; }
+            .ar-stage { padding: 70px 15px 180px; }
+            .character-display { max-width: 220px; }
+            .character-figure { border-radius: 24px; }
+            .character-name-display { font-size: 20px; }
+            .character-title-display { font-size: 12px; }
+            .interaction-area { padding: 15px; }
+            .interaction-grid { gap: 10px; }
+            .interaction-btn { padding: 14px 10px; }
+            .interaction-btn p { font-size: 13px; }
+            .interaction-btn span { font-size: 10px; }
+            .voice-btn { width: 52px; height: 52px; bottom: 190px; right: 15px; }
+            .voice-btn svg { width: 22px; height: 22px; }
+            .recording-label { bottom: 260px; right: 12px; }
+            .input-area { padding: 12px 15px; padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
+            .input-field { padding: 12px 18px; font-size: 14px; }
+            .send-btn { width: 44px; height: 44px; }
+            .speech-bubble { left: calc(100% + 10px); max-width: 260px; min-width: 200px; padding: 15px 18px; }
+            .speech-bubble p { font-size: 14px; }
+        }
+
+        @media (max-width: 480px) {
+            .header { padding: 20px 12px 15px; }
+            .header h1 { font-size: 20px; letter-spacing: 4px; }
+            .divider { width: 50px; margin: 15px auto; }
+            .character-grid { gap: 10px; padding: 10px; }
+            .character-card { border-radius: 16px; padding: 10px 8px; }
+            .character-avatar { width: 50px; height: 50px; margin-bottom: 8px; }
+            .character-name { font-size: 14px; letter-spacing: 1px; }
+            .character-title { font-size: 9px; }
+            .character-card:hover { transform: translateY(-4px) scale(1.01); }
+            .ar-stage { padding: 60px 12px 160px; }
+            .character-display { max-width: 180px; margin-bottom: 15px; }
+            .character-figure { border-radius: 20px; }
+            .character-name-display { font-size: 18px; letter-spacing: 3px; }
+            .character-title-display { font-size: 11px; }
+            .stop-btn { width: 40px; height: 40px; }
+            .stop-btn svg { width: 16px; height: 16px; }
+            .interaction-title { font-size: 12px; margin-bottom: 12px; }
+            .interaction-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+            .interaction-btn { padding: 12px 8px; border-radius: 12px; }
+            .interaction-btn p { font-size: 12px; margin-bottom: 3px; }
+            .interaction-btn span { font-size: 9px; }
+            .voice-btn { width: 46px; height: 46px; bottom: 170px; right: 12px; }
+            .voice-btn svg { width: 20px; height: 20px; }
+            .recording-label { bottom: 235px; font-size: 10px; padding: 6px 12px; }
+            .input-area { padding: 10px 12px; padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
+            .input-field { padding: 10px 15px; font-size: 13px; border-radius: 25px; }
+            .send-btn { width: 40px; height: 40px; }
+            .send-btn svg { width: 18px; height: 18px; }
+            .speech-bubble { left: calc(100% + 5px); max-width: 200px; min-width: 150px; padding: 12px 14px; border-radius: 16px; }
+            .speech-bubble p { font-size: 13px; line-height: 1.8; }
+            .speech-bubble::before { border: 12px solid transparent; }
+            .speaking-indicator { padding: 6px 12px; bottom: 15px; }
+            .wave-bar { width: 3px; height: 12px; }
+            .wave-bar:nth-child(2) { height: 18px; }
+            .wave-bar:nth-child(4) { height: 8px; }
+            .loading-text { font-size: 14px; }
+            .loading-spinner { width: 40px; height: 40px; }
+        }
     </style>
 </head>
 <body>
-    <audio id="bgMusic" loop>
-        <source src="古风 对话.mp3" type="audio/mpeg">
+    <audio id="bgMusic" loop autoplay>
+        <source src="gufengduihua.mp3" type="audio/mpeg">
     </audio>
     <div class="music-control">
-        <button id="musicBtn" class="music-btn">
-            <svg viewBox="0 0 24 24" id="musicIcon">
+        <button id="musicBtn" class="music-btn" title="播放/暂停背景音乐">
+            <svg class="music-icon" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+            </svg>
+            <svg class="pause-icon" viewBox="0 0 24 24" fill="currentColor" style="display:none;">
+                <rect x="6" y="4" width="4" height="16"></rect>
+                <rect x="14" y="4" width="4" height="16"></rect>
             </svg>
         </button>
     </div>
@@ -437,7 +528,7 @@
         <div class="character-grid">
             <div class="character-card" data-character="yan">
                 <div class="character-avatar">
-                    <img src="颜真卿.jpg" alt="颜真卿">
+                    <img src="yanzhenqing.jpg" alt="颜真卿">
                 </div>
                 <div class="character-name">颜真卿</div>
                 <div class="character-title">唐代 · 楷书大家</div>
@@ -445,7 +536,7 @@
 
             <div class="character-card" data-character="liu">
                 <div class="character-avatar">
-                    <img src="柳公权.jpg" alt="柳公权">
+                    <img src="liugongquan.jpg" alt="柳公权">
                 </div>
                 <div class="character-name">柳公权</div>
                 <div class="character-title">唐代 · 楷书名家</div>
@@ -453,7 +544,7 @@
 
             <div class="character-card" data-character="ouyang">
                 <div class="character-avatar">
-                    <img src="欧阳询.jpg" alt="欧阳询">
+                    <img src="ouyangxun.jpg" alt="欧阳询">
                 </div>
                 <div class="character-name">欧阳询</div>
                 <div class="character-title">唐代 · 书法宗师</div>
@@ -461,7 +552,7 @@
 
             <div class="character-card" data-character="huaisu">
                 <div class="character-avatar">
-                    <img src="怀素.jpg" alt="怀素">
+                    <img src="huaisu.jpg" alt="怀素">
                 </div>
                 <div class="character-name">怀素</div>
                 <div class="character-title">唐代 · 草书圣手</div>
@@ -469,7 +560,7 @@
 
             <div class="character-card" data-character="wang" style="grid-column: span 2;">
                 <div class="character-avatar">
-                    <img src="王羲之.jpg" alt="王羲之">
+                    <img src="wangxizhi.jpg" alt="王羲之">
                 </div>
                 <div class="character-name">王羲之</div>
                 <div class="character-title">东晋 · 书圣</div>
@@ -581,7 +672,7 @@
             yan: {
                 name: '颜真卿',
                 title: '唐代 · 楷书大家',
-                avatar: '颜真卿.jpg',
+                avatar: 'yanzhenqing.jpg',
                 stele: '《多宝塔碑》',
                 steleStory: '此碑乃天宝十一年，我四十四岁时为长安龙兴寺多宝佛塔所书。彼时我任醴泉县尉，与道英禅师相交甚笃。禅师发愿修建佛塔供奉佛牙，邀我撰文并书丹。我昼夜挥毫，笔力雄健，端庄典雅，此碑遂成我早期楷书之代表作。',
                 life: '我生于琅玡临沂，历经玄宗、肃宗、代宗、德宗四朝。安史之乱时，我率义军坚守平原郡，抵御安禄山叛军，尽显忠义。官至刑部尚书、太子太傅，封鲁郡开国公，世称"颜鲁公"。',
@@ -593,7 +684,7 @@
             liu: {
                 name: '柳公权',
                 title: '唐代 · 楷书名家',
-                avatar: '柳公权.jpg',
+                avatar: 'liugongquan.jpg',
                 stele: '《玄秘塔碑》',
                 steleStory: '此碑乃我六十四岁高龄所书，为大达法师端甫而立。端甫法师乃当世高僧，德行高深，宪宗皇帝曾赐号"大达"。裴休撰文，我执笔书丹，笔力遒劲，风骨更显，此碑遂成柳体之典范。',
                 life: '我生于京兆华原，即今陕西铜川。幼承家学，工于书法。穆宗皇帝曾问我笔法之道，我答以"心正则笔正"，帝改容，知其以笔谏也。官至太子少师，世称"柳少师"。',
@@ -605,7 +696,7 @@
             ouyang: {
                 name: '欧阳询',
                 title: '唐代 · 书法宗师',
-                avatar: '欧阳询.jpg',
+                avatar: 'ouyangxun.jpg',
                 stele: '《九成宫醴泉铭》',
                 steleStory: '此碑乃我七十六岁所书。太宗皇帝在九成宫避暑时，于宫中发现甘泉涌出，以为祥瑞，命魏征撰文记其事。我奉命书丹，昼夜揣摩，力求结构严谨、笔力劲健。此碑被誉为"天下第一楷书"。',
                 life: '我生于长沙，历经陈、隋、唐三代。唐时为太子率更令、弘文馆学士。书法初学王羲之，后参合北碑，自成一派。与虞世南、褚遂良、薛稷并称"初唐四大家"。',
@@ -617,7 +708,7 @@
             huaisu: {
                 name: '怀素',
                 title: '唐代 · 草书圣手',
-                avatar: '怀素.jpg',
+                avatar: 'huaisu.jpg',
                 stele: '《自叙帖》',
                 steleStory: '此帖乃吾自述学书经历之杰作。吾自幼出家为僧，家贫无纸，乃种芭蕉万株，取叶代纸练习。酒酣之后，笔走龙蛇，如骤雨旋风，神采飞扬。此帖被誉为"天下第一草书"。',
                 life: '吾俗姓钱，字藏真，永州零陵人。自幼出家，以草书名世。嗜酒，兴来挥毫，不计工拙。张旭之后，草书无人出其右，人谓吾"以狂继颠"。',
@@ -629,7 +720,7 @@
             wang: {
                 name: '王羲之',
                 title: '东晋 · 书圣',
-                avatar: '王羲之.jpg',
+                avatar: 'wangxizhi.jpg',
                 stele: '《兰亭集序》',
                 steleStory: '永和九年三月三日，吾与四十二位文人雅士会于会稽山阴之兰亭，修禊事也。天朗气清，惠风和畅，众人饮酒赋诗，吾为作序。微醉挥毫，一气呵成，有若神助。',
                 life: '吾生于会稽山阴，出身琅玡王氏。自幼好书，师从卫夫人，后遍学众家，自成一体。官至右将军、会稽内史，世称"王右军"。',
@@ -679,16 +770,24 @@
         let isMusicPlaying = false;
 
         bgMusic.volume = 0.3;
+        bgMusic.play();
+
+        bgMusic.addEventListener('playing', () => {
+            isMusicPlaying = true;
+            musicBtn.classList.add('playing');
+        });
+
+        bgMusic.addEventListener('pause', () => {
+            isMusicPlaying = false;
+            musicBtn.classList.remove('playing');
+        });
 
         musicBtn.addEventListener('click', () => {
             if (isMusicPlaying) {
                 bgMusic.pause();
-                musicBtn.classList.remove('playing');
             } else {
                 bgMusic.play();
-                musicBtn.classList.add('playing');
             }
-            isMusicPlaying = !isMusicPlaying;
         });
         
         stopBtn.addEventListener('click', () => {
@@ -1163,7 +1262,7 @@
         };
 
         voiceBtn.addEventListener('click', () => isRecording ? stopRecording() : startRecording());
-        document.addEventListener('DOMContentLoaded', initCharacterCards);
+        initCharacterCards();
     </script>
 </body>
 </html>
